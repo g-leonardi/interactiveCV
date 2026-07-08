@@ -2,3 +2,4 @@
 *.tmp
 cv_check.pdf
 .deploy/
+.wrangler/

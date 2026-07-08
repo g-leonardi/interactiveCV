@@ -1,0 +1,9 @@
+{
+  // Deploy statico su Cloudflare (Workers Static Assets): serve public/ come sito.
+  // Il nome combacia col Worker esistente per aggiornarlo invece di bloccare il deploy.
+  "name": "giuseppeleonardicv",
+  "compatibility_date": "2026-07-08",
+  "assets": {
+    "directory": "./public"
+  }
+}
