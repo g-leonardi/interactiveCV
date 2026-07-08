@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Innesto v4: camminata più lenta, oscillazione (sway) e posa 'spara'."""
+"""Innesto v4+v5: sprite corpo intero + audio arcade, schermata vittoria, sfondo deep-space."""
 import base64, io
 from fullbody import draw_body
 
@@ -117,5 +117,105 @@ css = anchor + '''
     filter:brightness(1.4) drop-shadow(0 0 7px var(--cyan));}''' % U
 h = h.replace(anchor, css, 1)
 
+# ============================================================
+#  v5 — AUDIO ARCADE + SCHERMATA VITTORIA + SFONDO DEEP-SPACE
+# ============================================================
+
+# 5a) modulo audio WebAudio (nessun file esterno → CSP-safe), dopo la var reduce
+a_red = "  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;"
+assert a_red in h, "ancora 'reduce' non trovata"
+audio_js = a_red + '''
+  // ---- audio (WebAudio synth · niente file esterni · CSP-safe) ----
+  var AUDIO={ctx:null,muted:false,master:null};
+  function audioInit(){ if(AUDIO.ctx) return; try{ var C=window.AudioContext||window.webkitAudioContext; if(!C) return; AUDIO.ctx=new C(); AUDIO.master=AUDIO.ctx.createGain(); AUDIO.master.gain.value=0.22; AUDIO.master.connect(AUDIO.ctx.destination); }catch(e){} }
+  function beep(freq,dur,type,vol,slideTo){ if(AUDIO.muted||!AUDIO.ctx) return; var c=AUDIO.ctx,t=c.currentTime; var o=c.createOscillator(),g=c.createGain(); o.type=type||'square'; o.frequency.setValueAtTime(freq,t); if(slideTo) o.frequency.exponentialRampToValueAtTime(slideTo,t+dur*0.9); g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(vol||0.3,t+0.008); g.gain.exponentialRampToValueAtTime(0.0001,t+dur); o.connect(g); g.connect(AUDIO.master); o.start(t); o.stop(t+dur+0.03); }
+  function sfx(name){ if(AUDIO.muted||!AUDIO.ctx) return;
+    if(name==='jump'){ beep(340,0.16,'square',0.26,720); }
+    else if(name==='fire'){ beep(900,0.12,'sawtooth',0.20,170); }
+    else if(name==='key'){ beep(660,0.08,'square',0.28); setTimeout(function(){beep(990,0.13,'square',0.28);},80); }
+    else if(name==='bug'){ beep(220,0.18,'square',0.28,55); }
+    else if(name==='hurt'){ beep(180,0.26,'sawtooth',0.30,48); }
+    else if(name==='open'){ beep(520,0.07,'triangle',0.24); setTimeout(function(){beep(784,0.14,'triangle',0.24);},75); } }
+  function fanfare(){ if(AUDIO.muted||!AUDIO.ctx) return; var ns=[523,659,784,1047,880,1319]; for(var i=0;i<ns.length;i++){ (function(f,j){ setTimeout(function(){ beep(f,0.24,'square',0.26); beep(f/2,0.24,'triangle',0.10); }, j*150); })(ns[i],i); } }'''
+h = h.replace(a_red, audio_js, 1)
+
+# 5b) pulsante mute nell'HUD (prima di FULL CV)
+old_cv = '      <button class="cvbtn" id="cvBtn">☰ FULL CV</button>'
+new_cv = '      <button class="cvbtn" id="muteBtn" title="Sound on/off" aria-label="Toggle sound">\U0001f50a</button>\n' + old_cv
+assert old_cv in h, "bottone cvBtn non trovato"; h = h.replace(old_cv, new_cv, 1)
+
+# 5c) begin(): sblocca l'audio al primo gesto + handler del mute
+old_begin = ("  document.getElementById('startBtn').addEventListener('click', begin);\n"
+             "  function begin(){ if(started) return; started=true; document.getElementById('start').classList.add('hide'); }")
+new_begin = ("  document.getElementById('startBtn').addEventListener('click', begin);\n"
+             "  function begin(){ if(started) return; started=true; document.getElementById('start').classList.add('hide'); audioInit(); if(AUDIO.ctx && AUDIO.ctx.state==='suspended') AUDIO.ctx.resume(); }\n"
+             "  (function(){ var mb=document.getElementById('muteBtn'); if(!mb) return; mb.addEventListener('click', function(){ audioInit(); AUDIO.muted=!AUDIO.muted; if(!AUDIO.muted && AUDIO.ctx && AUDIO.ctx.state==='suspended') AUDIO.ctx.resume(); mb.textContent=AUDIO.muted?'\U0001f507':'\U0001f50a'; mb.style.opacity=AUDIO.muted?'0.5':'1'; if(!AUDIO.muted) sfx('key'); }); })();")
+assert old_begin in h, "begin() non trovato"; h = h.replace(old_begin, new_begin, 1)
+
+# 5d) hook SFX su salto / fuoco / chiave / bug / apertura cabinato / danno
+hooks = [
+  ("      if(jbuf>0 && coyote>0){ vy=JUMP; onGround=false; coyote=0; jbuf=0; } else if(jbuf>0){ jbuf--; }",
+   "      if(jbuf>0 && coyote>0){ vy=JUMP; onGround=false; coyote=0; jbuf=0; sfx('jump'); } else if(jbuf>0){ jbuf--; }"),
+  ("  function fire(){ if(!started||paused()||!hasGuitar||fireCD>0) return; fireCD=15;",
+   "  function fire(){ if(!started||paused()||!hasGuitar||fireCD>0) return; fireCD=15; sfx('fire');"),
+  ("  function collectKey(k){ k.got=true;",
+   "  function collectKey(k){ k.got=true; sfx('key');"),
+  ("  function killBug(b){ if(b.dead) return; b.dead=true;",
+   "  function killBug(b){ if(b.dead) return; b.dead=true; sfx('bug');"),
+  ("    if(!s._done){ s._done=true; stationEls[s.id].classList.add('done');",
+   "    if(!s._done){ s._done=true; sfx('open'); stationEls[s.id].classList.add('done');"),
+  ("  function loseHeart(){ if(hearts>0) hearts--; renderHearts(); }",
+   "  function loseHeart(){ if(hearts>0) hearts--; renderHearts(); sfx('hurt'); }"),
+]
+for o, n in hooks:
+    assert o in h, "hook SFX non trovato: " + o[:48]
+    h = h.replace(o, n, 1)
+
+# 5e) SCHERMATA VITTORIA: gameClear diventa un overlay vero (+ fanfara)
+old_gc = "  function gameClear(){ toast('◆ GAME CLEARED ◆','all 9 keys collected — thanks for playing'); }"
+new_gc = '''  function gameClear(){ if(window.__cleared) return; window.__cleared=true; fanfare();
+    var o=document.createElement('div'); o.className='overlay'; o.id='winScreen'; o.style.zIndex='90';
+    o.innerHTML='<h1 class="title" style="color:var(--cyan);text-shadow:0 0 22px rgba(69,214,232,.6),4px 4px 0 rgba(255,92,138,.3)">✦ GAME CLEARED ✦</h1>'
+      +'<div style="font-family:var(--mono);font-size:22px;letter-spacing:6px;margin:14px 0 6px">\U0001f511\U0001f511\U0001f511\U0001f511\U0001f511\U0001f511\U0001f511\U0001f511\U0001f511</div>'
+      +'<p class="lede" style="max-width:46ch;color:var(--muted)">All <b>9 keys</b> collected — you walked my whole career, 2011 to today. Thanks for playing. Now the real thing:</p>'
+      +'<button class="contBtn" id="winCv">☰ READ THE FULL CV</button>'
+      +'<button class="ghostBtn" id="winAgain">▶ PLAY AGAIN</button>';
+    (overEl.parentNode||document.body).appendChild(o);
+    document.getElementById('winCv').addEventListener('click', function(){ openCv(); });
+    document.getElementById('winAgain').addEventListener('click', function(){ location.reload(); }); }'''
+assert old_gc in h, "gameClear non trovato"; h = h.replace(old_gc, new_gc, 1)
+
+# 5f) SFONDO DEEP-SPACE: nuovo campo stellare a parallasse + pianeta ad anelli + nebulosa
+old_stars = "    stars=[]; for(var i=0;i<70;i++) stars.push({x:Math.random()*W,y:Math.random()*H*0.5,r:Math.random()*1.4+0.3,a:Math.random()*0.6+0.2}); }"
+new_stars = "    stars=[]; for(var i=0;i<170;i++){ var lyr=i<95?0:(i<145?1:2); stars.push({x:Math.random()*W,y:Math.random()*H,r:(lyr===2?Math.random()*1.8+1.1:Math.random()*1.1+0.3),a:Math.random()*0.55+0.28,l:lyr,tw:Math.random()*6.28}); } }"
+assert old_stars in h, "init stelle non trovato"; h = h.replace(old_stars, new_stars, 1)
+
+new_drawbg = '''  function drawBG(t){
+    ctx.clearRect(0,0,W,H);
+    var bg=ctx.createLinearGradient(0,0,0,H); bg.addColorStop(0,'#0a0620'); bg.addColorStop(0.55,'#0d0826'); bg.addColorStop(1,'#050310'); ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+    var neb=[[W*0.24,H*0.30,'rgba(120,60,200,0.16)'],[W*0.74,H*0.52,'rgba(60,120,220,0.13)'],[W*0.50,H*0.80,'rgba(200,60,140,0.10)']];
+    for(var q=0;q<neb.length;q++){ var nn=neb[q]; var rg=ctx.createRadialGradient(nn[0],nn[1],0,nn[0],nn[1],Math.max(W,H)*0.42); rg.addColorStop(0,nn[2]); rg.addColorStop(1,'rgba(0,0,0,0)'); ctx.fillStyle=rg; ctx.fillRect(0,0,W,H); }
+    var tw=reduce?0:t*0.002, pf=[0.05,0.10,0.17];
+    for(var i=0;i<stars.length;i++){ var s=stars[i]; var sx=((s.x - px*pf[s.l])%W+W)%W; var a=s.a*(0.55+0.45*Math.sin(tw+s.tw)); ctx.fillStyle='rgba('+(s.l===2?'185,222,255':'212,202,255')+','+a.toFixed(3)+')'; ctx.fillRect(sx,s.y,s.r,s.r); if(s.l===2 && s.r>2.2){ ctx.fillStyle='rgba(140,200,255,'+(a*0.4).toFixed(3)+')'; ctx.fillRect(sx-1,s.y,s.r+2,s.r); ctx.fillRect(sx,s.y-1,s.r,s.r+2); } }
+    var pxp=W*0.80 - px*0.03, pyp=H*0.24, pr=Math.min(W,H)*0.11;
+    ctx.save();
+    var pg=ctx.createLinearGradient(pxp-pr,pyp-pr,pxp+pr,pyp+pr); pg.addColorStop(0,'#ff9a6e'); pg.addColorStop(0.5,'#e0556b'); pg.addColorStop(1,'#6a2a6e');
+    ctx.fillStyle=pg; ctx.beginPath(); ctx.arc(pxp,pyp,pr,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='rgba(6,4,20,0.42)'; ctx.beginPath(); ctx.arc(pxp+pr*0.3,pyp,pr,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='rgba(120,200,255,0.55)'; ctx.lineWidth=Math.max(2,pr*0.05); ctx.save(); ctx.translate(pxp,pyp); ctx.scale(1,0.30); ctx.beginPath(); ctx.arc(0,0,pr*1.7,0,Math.PI*2); ctx.stroke(); ctx.restore();
+    ctx.restore();
+    var horizon=H*0.72, off=reduce?0:((t*0.0004)%1);
+    ctx.save(); ctx.strokeStyle='rgba(69,214,232,0.20)'; ctx.lineWidth=1;
+    for(var r=0;r<14;r++){ var f=(r+off)/14; var yy=horizon+(H-horizon)*(f*f); ctx.globalAlpha=0.10+f*0.35; ctx.beginPath(); ctx.moveTo(0,yy); ctx.lineTo(W,yy); ctx.stroke(); }
+    ctx.globalAlpha=1; var vpx=W*0.5; ctx.strokeStyle='rgba(120,90,200,0.28)';
+    for(var vx2=-8;vx2<=8;vx2++){ var fx=vpx+vx2*(W*0.16); ctx.beginPath(); ctx.moveTo(vpx,horizon); ctx.lineTo(fx,H); ctx.stroke(); }
+    ctx.globalAlpha=1; ctx.strokeStyle='rgba(69,214,232,0.5)'; ctx.lineWidth=2; ctx.shadowBlur=14; ctx.shadowColor='#45d6e8'; ctx.beginPath(); ctx.moveTo(0,horizon); ctx.lineTo(W,horizon); ctx.stroke();
+    ctx.restore();
+  }'''
+i1 = h.find('  function drawBG(t){')
+i2 = h.find('  requestAnimationFrame(loop);', i1)
+assert i1 > 0 and i2 > i1, "blocco drawBG non individuato"
+h = h[:i1] + new_drawbg + '\n' + h[i2:]
+
 open(OUT, 'w', encoding='utf-8').write(h)
-print('PATCH v4 OK · bytes', len(h))
+print('PATCH v4+v5 OK · bytes', len(h))
