@@ -1,18 +1,31 @@
-# Interactive CV — progetto (backup persistente)
+# Interactive CV — Giuseppe Leonardi
 
-**Artifact live (gioco):** https://claude.ai/code/artifact/c27ccaa5-f81a-4026-b461-ab7e88beb451
+CV giocabile (platformer synthwave): cammini la timeline di carriera, sblocchi i
+progetti dai cabinati, raccogli le chiavi. Personaggio = sprite pixel di Giuseppe.
+
+**Deploy entrypoint:** `index.html` (self-contained, nessuna dipendenza esterna).
+**Live artifact:** https://claude.ai/code/artifact/c27ccaa5-f81a-4026-b461-ab7e88beb451
 
 ## File
-- `interactive-cv.html` — **sorgente canonico** del gioco (pulito, dal `<title>`). È QUESTO che si ripubblica.
-- `interactive-cv.raw-with-wrapper.html` — copia grezza scaricata dall'artifact (con wrapper host). Solo archivio.
+- `index.html` — il gioco (con CV PDF + deep-dive MD incorporati e scaricabili).
 - `select-your-engineer.html` — schermata arcade "Select Your Engineer".
-- `sprite-lab.html` — tuner interattivo dello sprite (slider + export PNG).
-- `assets/` — sprite pixel (avatar_80/160/320, tondo, idle), `sprite2.py` (generatore), `config.json` (parametri), `patch_game.py` (innesto sprite nel gioco).
+- `sprite-lab.html` — tuner interattivo dello sprite.
+- `interactive-cv.original-backup.html` — sorgente originale intatto (base per le patch).
+- `assets/` — toolchain sprite:
+  - `sprite2.py` — genera la testa pixel dalla foto/config.
+  - `config.json` — parametri sprite scelti (silver fox, ciuffo swept…).
+  - `fullbody.py` — genera i **8 frame** a corpo intero (idle/blink/walk1-4/jump/fire).
+  - `patch4.py` — innesta lo sprite animato nel gioco (riparte SEMPRE dal backup originale).
+  - `fullbody_*.png` — i frame renderizzati.
 
-## Sprite nel gioco
-`#player` usa `<img class="peo">` (avatar_160 ritagliato) al posto dei riquadri CSS head/torso/gambe.
-Flip (`scaleX`), camera, `.walk` e la chitarra `.gtr` restano invariati. Rigenerare l'innesto: `python3 assets/patch_game.py`.
+## Rigenerare lo sprite nel gioco
+```
+python3 assets/fullbody.py     # rigenera i frame
+python3 assets/patch4.py       # riscrive index.html col nuovo sprite
+```
 
-## Ripubblicare dopo modifiche
-Tool Artifact con `url=<artifact live>` e `file_path=interactive-cv.html`.
-IMPORTANTE: pubblicare la versione SENZA wrapper (dal `<title>`), altrimenti il frame-runtime dell'host si duplica.
+## Deploy (statico)
+Qualsiasi host statico serve `index.html` alla radice. Es. Cloudflare Pages:
+```
+wrangler pages deploy . --project-name interactive-cv
+```
