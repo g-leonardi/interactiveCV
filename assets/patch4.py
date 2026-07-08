@@ -18,6 +18,12 @@ h = h[i:].rstrip()
 for t in ('</html>','</body>'):
     if h.endswith(t): h = h[:-len(t)].rstrip()
 
+# 0) meta indispensabili per il mobile (il file non passa dal wrapper dell'host su GitHub Pages):
+#    senza viewport il telefono renderizza a ~980px e rimpicciolisce tutto.
+META = ('<meta charset="utf-8">\n'
+        '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n')
+h = META + h
+
 # 1) variabili sprite
 a1 = '  "use strict";'; assert h.count(a1) == 1
 decls = '\n'.join('  var PEO_%s="%s";' % (k.upper(), v) for k, v in U.items())
