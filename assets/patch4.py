@@ -84,6 +84,11 @@ h = h.replace('grab a \U0001f511 then press ↑ at its cabinet · fall = full CV
 h = h.replace('Fall in a pit? You get the <b>full CV</b> instantly — no skill required.',
               'You start with <b>3 ♥</b> — bugs and pits each cost one (pits drop you at the last checkpoint). Out of hearts? You still get the <b>full CV</b> — button top-right, anytime.', 1)
 
+# 4a) download MD robusto (fallback a nuova scheda se il download è bloccato)
+old_dlt = '''  function dlText(name,text,type){ var b=new Blob([text],{type:type}); var a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=name; document.body.appendChild(a); a.click(); setTimeout(function(){ a.remove(); URL.revokeObjectURL(a.href); },100); }'''
+new_dlt = '''  function dlText(name,text,type){ try{ var b=new Blob([text],{type:type}),url=URL.createObjectURL(b); var a=document.createElement('a'); a.href=url; a.download=name; a.rel='noopener'; document.body.appendChild(a); a.click(); setTimeout(function(){ a.remove(); URL.revokeObjectURL(url); },400); }catch(e){ window.open('data:'+type+';charset=utf-8,'+encodeURIComponent(text),'_blank'); } }'''
+assert old_dlt in h, "dlText non trovato"; h = h.replace(old_dlt, new_dlt, 1)
+
 # 4b) download PDF robusto (Blob invece di data-URI gigante)
 old_pdf = '''document.getElementById('dlPdf').addEventListener('click', function(){ var a=document.createElement('a'); a.href='data:application/pdf;base64,'+CV_PDF_B64; a.download='Giuseppe-Leonardi-CV.pdf'; document.body.appendChild(a); a.click(); setTimeout(function(){ a.remove(); },100); });'''
 new_pdf = '''document.getElementById('dlPdf').addEventListener('click', function(){ try{ var bin=atob(CV_PDF_B64),n=bin.length,arr=new Uint8Array(n); for(var i=0;i<n;i++)arr[i]=bin.charCodeAt(i); var b=new Blob([arr],{type:'application/pdf'}),url=URL.createObjectURL(b); var a=document.createElement('a'); a.href=url; a.download='Giuseppe-Leonardi-CV.pdf'; document.body.appendChild(a); a.click(); setTimeout(function(){ a.remove(); URL.revokeObjectURL(url); },300); }catch(e){ window.open('data:application/pdf;base64,'+CV_PDF_B64,'_blank'); } });'''
