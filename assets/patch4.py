@@ -223,5 +223,18 @@ i2 = h.find('  requestAnimationFrame(loop);', i1)
 assert i1 > 0 and i2 > i1, "blocco drawBG non individuato"
 h = h[:i1] + new_drawbg + '\n' + h[i2:]
 
+# 6) sostituisci il CV PDF incorporato con la risorsa aggiornata (assets/cv.pdf)
+import os
+CVPDF = os.path.join(os.path.dirname(__file__), 'cv.pdf')
+if os.path.exists(CVPDF):
+    newb64 = base64.b64encode(open(CVPDF, 'rb').read()).decode()
+    pat = 'var CV_PDF_B64="'
+    j = h.find(pat); assert j > 0, "CV_PDF_B64 non trovato"
+    k = h.find('"', j + len(pat)); assert k > j
+    h = h[:j + len(pat)] + newb64 + h[k:]
+    print('CV PDF aggiornato ·', len(newb64), 'char b64')
+else:
+    print('WARN: assets/cv.pdf assente, PDF invariato')
+
 open(OUT, 'w', encoding='utf-8').write(h)
 print('PATCH v4+v5 OK · bytes', len(h))
