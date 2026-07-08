@@ -1,0 +1,256 @@
+<title>PEO Sprite Lab — tuner pixel-art</title>
+<style>
+  :root{
+    --bg:#0a0e17; --panel:#111a2b; --panel2:#0c1424; --line:#243350;
+    --ink:#eaf2ff; --dim:#93a6c6; --cyan:#39e2ff; --gold:#ffce3d; --mag:#ff478f;
+    --mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    min-height:100vh; background:
+      radial-gradient(1000px 600px at 30% -10%,#15233f 0,transparent 60%), var(--bg);
+    color:var(--ink); font-family:var(--sans); padding:clamp(12px,3vw,28px);
+    display:flex; justify-content:center;
+  }
+  .wrap{width:min(1000px,100%); display:grid; grid-template-columns:minmax(0,320px) 1fr; gap:22px}
+  @media(max-width:720px){ .wrap{grid-template-columns:1fr} }
+  h1{font-family:var(--mono); font-size:clamp(15px,3vw,22px); letter-spacing:.14em; text-transform:uppercase;
+     color:var(--cyan); text-shadow:0 0 8px #39e2ff66; margin:0 0 4px}
+  .sub{color:var(--dim); font-size:12px; margin:0 0 16px; font-family:var(--mono); letter-spacing:.06em}
+
+  .stage{
+    position:sticky; top:20px; align-self:start;
+    border:2px solid var(--cyan); border-radius:14px;
+    background:linear-gradient(180deg,#0a1930,#0a0f1c 70%);
+    box-shadow:0 0 24px #39e2ff30, 0 0 0 4px #0a0f1c inset;
+    padding:20px; display:flex; flex-direction:column; align-items:center; gap:16px;
+  }
+  #view{ image-rendering:pixelated; width:min(280px,72vw); height:auto;
+         filter:drop-shadow(0 8px 0 #0007); background:transparent }
+  .btns{display:flex; flex-wrap:wrap; gap:8px; justify-content:center}
+  button{
+    font-family:var(--mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--ink); background:#132241; border:1px solid var(--line); border-radius:8px;
+    padding:9px 12px; cursor:pointer; transition:.15s;
+  }
+  button:hover{border-color:var(--cyan); box-shadow:0 0 10px #39e2ff40}
+  button.primary{background:linear-gradient(180deg,#1c6,#0a8); border-color:#0fb; color:#04140c}
+  button:focus-visible{outline:2px solid var(--gold); outline-offset:2px}
+
+  .controls{display:flex; flex-direction:column; gap:14px}
+  .grp{border:1px solid var(--line); border-radius:12px; padding:14px; background:linear-gradient(180deg,var(--panel),var(--panel2))}
+  .grp h2{margin:0 0 10px; font-family:var(--mono); font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--gold)}
+  .ctrl{display:grid; grid-template-columns:1fr auto; align-items:center; gap:6px 10px; margin-bottom:11px}
+  .ctrl:last-child{margin-bottom:0}
+  .ctrl label{font-size:12px; color:var(--dim)}
+  .ctrl output{font-family:var(--mono); font-size:11px; color:var(--cyan); font-variant-numeric:tabular-nums}
+  .ctrl input[type=range]{grid-column:1/3; width:100%; accent-color:var(--mag); margin:0}
+  .seg{grid-column:1/3; display:flex; gap:6px; flex-wrap:wrap}
+  .seg button{flex:1; padding:7px 4px; font-size:10px}
+  .seg button[aria-pressed=true]{background:var(--cyan); color:#04121a; border-color:var(--cyan)}
+  textarea{width:100%; height:66px; background:#0a1120; color:var(--dim); border:1px solid var(--line);
+           border-radius:8px; font-family:var(--mono); font-size:10px; padding:8px; resize:vertical}
+</style>
+
+<div class="wrap">
+  <!-- PREVIEW -->
+  <div class="stage">
+    <h1 style="align-self:flex-start">PEO Sprite Lab</h1>
+    <canvas id="view" width="80" height="80" aria-label="Anteprima sprite pixel-art"></canvas>
+    <div class="btns">
+      <button class="primary" id="dl">⬇︎ Scarica PNG</button>
+      <button id="seed">🎲 Texture</button>
+      <button id="copy">⧉ Copia parametri</button>
+      <button id="reset">↺ Reset</button>
+    </div>
+    <textarea id="params" readonly aria-label="Parametri correnti"></textarea>
+  </div>
+
+  <!-- CONTROLS -->
+  <div>
+    <p class="sub">Muovi gli slider → l'avatar si aggiorna. Quando ti piace: “Copia parametri” e incollameli.</p>
+    <div class="controls">
+      <div class="grp">
+        <h2>Capelli</h2>
+        <div class="ctrl"><label for="quiff">Altezza ciuffo</label><output id="quiff_o"></output>
+          <input type="range" id="quiff" min="0" max="10" step="1"></div>
+        <div class="ctrl"><label for="sweep">Direzione ciuffo</label><output id="sweep_o"></output>
+          <input type="range" id="sweep" min="-10" max="10" step="1"></div>
+        <div class="ctrl"><label for="hairline">Fronte (attaccatura)</label><output id="hairline_o"></output>
+          <input type="range" id="hairline" min="15" max="24" step="1"></div>
+        <div class="ctrl"><label for="silver">Argento capelli</label><output id="silver_o"></output>
+          <input type="range" id="silver" min="0" max="100" step="5"></div>
+      </div>
+      <div class="grp">
+        <h2>Barba</h2>
+        <div class="ctrl"><label for="beard">Lunghezza barba</label><output id="beard_o"></output>
+          <input type="range" id="beard" min="0" max="10" step="1"></div>
+        <div class="ctrl"><label for="bsilver">Argento barba</label><output id="bsilver_o"></output>
+          <input type="range" id="bsilver" min="0" max="100" step="5"></div>
+      </div>
+      <div class="grp">
+        <h2>Volto & outfit</h2>
+        <div class="ctrl"><label for="glass">Occhiali (dimensione)</label><output id="glass_o"></output>
+          <input type="range" id="glass" min="6" max="9" step="1"></div>
+        <div class="ctrl"><label>Incarnato</label><span></span>
+          <div class="seg" id="skin">
+            <button data-v="0">Chiaro</button><button data-v="1">Medio</button><button data-v="2">Scuro</button>
+          </div></div>
+        <div class="ctrl"><label>Camicia</label><span></span>
+          <div class="seg" id="shirt">
+            <button data-v="0">Chambray</button><button data-v="1">Nera</button><button data-v="2">Denim</button>
+          </div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const W=80,H=80,CX=40;
+  const view=document.getElementById('view'), vctx=view.getContext('2d');
+
+  // ---------- palette ----------
+  const hx=c=>{c=c.replace('#','');return [parseInt(c.slice(0,2),16),parseInt(c.slice(2,4),16),parseInt(c.slice(4,6),16),255];};
+  const SKINS=[['#d8b088','#c69a74','#e2bd95'],['#c99f78','#b98d66','#d6ad84'],['#b3855f','#9c704c','#c1966f']];
+  const SHIRTS=[['#8ba3bb','#6f889f','#5c748c'],['#2c2f38','#1c1f26','#3a3f4a'],['#3f5a78','#2c4258','#213a52']];
+  const HAIR_D=hx('4c443c'),HAIR_M=hx('8b8178'),HAIR_L=hx('c8ccd2');
+  const BEARD_D=hx('332821'),BEARD_M=hx('6a5f55'),BEARD_L=hx('9a8f83');
+  const TEE=hx('eef2f6'),TEE_SH=hx('d3dae1');
+  const BROW=hx('3a2c22'),EYE=hx('2a2018'),EYEW=hx('eef3ff'),METAL=hx('828d97'),MOUTH=hx('5a3d34');
+
+  // ---------- default params ----------
+  const DEF={quiff:4, sweep:-2, hairline:18, silver:35, beard:6, bsilver:15, glass:8, skin:1, shirt:0, seed:1337};
+  let P=Object.assign({},DEF);
+
+  let _s=P.seed;
+  const rnd=()=>{_s=(_s*1664525+1013904223)>>>0; return _s/4294967296;};
+  const ell=(x,y,cx,cy,rx,ry)=>{const a=(x-cx)/rx,b=(y-cy)/ry;return a*a+b*b<=1;};
+
+  function regions(){
+    const sweepX=33+P.sweep*0.9, topY=9-P.quiff;
+    const top_edge=x=>topY+0.058*(x-sweepX)*(x-sweepX);
+    const hairline=x=>P.hairline+Math.max(0,(Math.abs(x-CX)-10))*0.4;
+    const bRy=12.5+P.beard*0.7, bCy=41.5+P.beard*0.45;
+    const face=(x,y)=>ell(x,y,CX,34,16,19);
+    const hair=(x,y)=>{
+      if(x>=23&&x<=56 && top_edge(x)<=y && y<hairline(x)) return true;
+      if(ell(x,y,CX,31,19.5,20)){ if(y<hairline(x))return true; if((x<28||x>52)&&y<43)return true; }
+      return false;
+    };
+    const sideburn=(x,y)=>((x>=23&&x<=28)||(x>=52&&x<=57))&&y>=27&&y<=45;
+    const beard=(x,y)=>((ell(x,y,CX,bCy,16.5,bRy)&&y>=38)||sideburn(x,y)||(y>=38&&y<=43&&x>=30&&x<=50))&&x>=21&&x<=59;
+    const neck=(x,y)=>x>=34&&x<=46&&y>=52&&y<=61;
+    const shirt=(x,y)=>ell(x,y,CX,82,31,24)&&y>=57;
+    const tee=(x,y)=>y>=58&&y<=76&&Math.abs(x-CX)<(y-56)*0.45;
+    return {top_edge,hairline,face,hair,beard,neck,shirt,tee};
+  }
+
+  function draw(ctx){
+    const R=regions(), sk=SKINS[P.skin].map(hx), sh=SHIRTS[P.shirt].map(hx);
+    const SKIN=sk[0],SKIN_SH=sk[1],SKIN_HI=sk[2];
+    const SHIRT=sh[0],SHIRT_SH=sh[1],COLLAR=sh[2];
+    const silverK=P.silver/100, bsilverK=P.bsilver/100;
+    _s=P.seed;
+    const img=ctx.createImageData(W,H); const d=img.data;
+    const put=(x,y,c)=>{const i=(y*W+x)*4; d[i]=c[0];d[i+1]=c[1];d[i+2]=c[2];d[i+3]=c[3];};
+
+    for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+      let c=null;
+      if(R.beard(x,y)){
+        const r=rnd(); const pM=0.10+0.30*bsilverK, pL=0.02+0.14*bsilverK;
+        c = r<pL?BEARD_L : (r<pL+pM?BEARD_M:BEARD_D);
+      } else if(R.hair(x,y)){
+        const hl=R.hairline(x), te=R.top_edge(x);
+        const top=Math.max(0,Math.min(1,(hl-y)/Math.max(1,hl-te)));
+        const strand=((x*1.15+y*0.35)|0)%5; const r=rnd();
+        let pL=(0.05+0.34*top*top)*(0.4+1.5*silverK), pM=0.20+0.10*top;
+        if(strand===0)pL+=0.22; if(strand===2)pM+=0.15;
+        c = r<pL?HAIR_L : (r<pL+pM?HAIR_M:HAIR_D);
+      } else if(R.face(x,y)){
+        c=SKIN;
+        if(ell(x,y,29,38,5,6)||ell(x,y,51,38,5,6))c=SKIN_SH;
+        if(ell(x,y,CX,40,2.4,4))c=SKIN_SH;
+      } else if(R.neck(x,y)){
+        c=y>58?SKIN_SH:SKIN;
+      } else if(R.tee(x,y)){
+        c=(x<CX-3||x>CX+3)?TEE_SH:TEE;
+      } else if(R.shirt(x,y)){
+        c=(x<CX-8||x>CX+8)?SHIRT_SH:SHIRT;
+        if(rnd()<0.10)c=SHIRT_SH;
+        if(y<62&&Math.abs(Math.abs(x-CX)-9)<1.4)c=COLLAR;
+      }
+      if(c)put(x,y,c);
+    }
+    ctx.putImageData(img,0,0);
+
+    // overlays vettoriali
+    const blend=(x,y,c,a=1)=>{ if(x<0||x>=W||y<0||y>=H)return;
+      const cur=ctx.getImageData(x,y,1,1).data;
+      ctx.fillStyle=`rgba(${c[0]},${c[1]},${c[2]},${a})`; ctx.fillRect(x,y,1,1); };
+    // eyebrows
+    ctx.fillStyle='#3a2c22';
+    for(let x=25;x<38;x++){const yy=27-Math.round((x-31)*(x-31)/40); ctx.fillRect(x,yy,1,2);}
+    for(let x=43;x<56;x++){const yy=27-Math.round((x-49)*(x-49)/40); ctx.fillRect(x,yy,1,2);}
+    // eyes
+    ctx.fillStyle='#2a2018';
+    for(const ex of [31,49]) for(let y=32;y<37;y++)for(let x=ex-2;x<=ex+2;x++) if(ell(x,y,ex,34,1.7,1.9))ctx.fillRect(x,y,1,1);
+    ctx.fillStyle='#eef3ff'; ctx.fillRect(31,33,1,1); ctx.fillRect(49,33,1,1);
+    // glasses aviator
+    const gr=P.glass, grY=gr*0.9;
+    ctx.strokeStyle='#828d97'; ctx.lineWidth=1.3; ctx.fillStyle='rgba(150,205,230,0.14)';
+    for(const cx of [31.5,48.5]){ ctx.beginPath(); ctx.ellipse(cx,34,gr,grY,0,0,7); ctx.fill(); ctx.stroke(); }
+    ctx.beginPath(); ctx.moveTo(38.6,30.4);ctx.lineTo(41.4,30.4);
+    ctx.moveTo(38.4,33.2);ctx.lineTo(41.6,33.2);
+    ctx.moveTo(25,29.6);ctx.lineTo(38.6,29.4); ctx.moveTo(41.4,29.4);ctx.lineTo(55,29.6);
+    ctx.moveTo(24,33);ctx.lineTo(18,31); ctx.moveTo(56,33);ctx.lineTo(62,31); ctx.stroke();
+    // smile
+    ctx.strokeStyle='#5a3d34'; ctx.lineWidth=1; ctx.beginPath();
+    ctx.moveTo(35,47); ctx.quadraticCurveTo(40,49,45,47); ctx.stroke();
+  }
+
+  // ---------- render pipeline ----------
+  const off=document.createElement('canvas'); off.width=W; off.height=H;
+  const octx=off.getContext('2d');
+  function render(){
+    octx.clearRect(0,0,W,H); draw(octx);
+    vctx.clearRect(0,0,W,H); vctx.imageSmoothingEnabled=false; vctx.drawImage(off,0,0);
+    document.getElementById('params').value=JSON.stringify(P);
+  }
+
+  // ---------- bind controls ----------
+  const sliders=['quiff','sweep','hairline','silver','beard','bsilver','glass'];
+  sliders.forEach(k=>{
+    const el=document.getElementById(k), out=document.getElementById(k+'_o');
+    el.value=P[k]; out.textContent=P[k];
+    el.addEventListener('input',()=>{ P[k]=+el.value; out.textContent=el.value; render(); });
+  });
+  function bindSeg(id){
+    const seg=document.getElementById(id);
+    [...seg.children].forEach(b=>b.addEventListener('click',()=>{
+      P[id]=+b.dataset.v; syncSeg(id); render();
+    }));
+  }
+  function syncSeg(id){ [...document.getElementById(id).children].forEach(b=>b.setAttribute('aria-pressed', +b.dataset.v===P[id])); }
+  bindSeg('skin'); bindSeg('shirt');
+
+  document.getElementById('seed').onclick=()=>{ P.seed=(P.seed*48271+ (P.quiff+7))>>>0 || 12345; render(); };
+  document.getElementById('reset').onclick=()=>{ P=Object.assign({},DEF); syncAll(); render(); };
+  document.getElementById('copy').onclick=async ()=>{
+    const t=JSON.stringify(P);
+    try{ await navigator.clipboard.writeText(t); flash('copy','✓ Copiato'); }
+    catch(e){ document.getElementById('params').select(); flash('copy','Selezionato ↑'); }
+  };
+  document.getElementById('dl').onclick=()=>{
+    const s=8, big=document.createElement('canvas'); big.width=W*s; big.height=H*s;
+    const bc=big.getContext('2d'); bc.imageSmoothingEnabled=false; bc.drawImage(off,0,0,W*s,H*s);
+    const a=document.createElement('a'); a.download='peo_sprite.png'; a.href=big.toDataURL('image/png'); a.click();
+  };
+  function flash(id,msg){ const b=document.getElementById(id), o=b.textContent; b.textContent=msg; setTimeout(()=>b.textContent=o,1200); }
+  function syncAll(){ sliders.forEach(k=>{document.getElementById(k).value=P[k]; document.getElementById(k+'_o').textContent=P[k];}); syncSeg('skin'); syncSeg('shirt'); }
+
+  syncAll(); render();
+})();
+</script>

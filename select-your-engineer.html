@@ -1,0 +1,220 @@
+<title>SELECT YOUR ENGINEER — Giuseppe "Peo" Leonardi</title>
+<style>
+  :root{
+    --bg:#080b12; --bg2:#0d1220; --panel:#111a2b; --panel2:#0b1220;
+    --ink:#eaf2ff; --dim:#8ea2c4; --faint:#5a6f92;
+    --cyan:#39e2ff; --mag:#ff478f; --gold:#ffce3d; --lime:#7bffb0;
+    --line:#22304b;
+    --mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,"Liberation Mono",monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    min-height:100vh;
+    background:
+      radial-gradient(1200px 700px at 50% -10%, #12203a 0%, transparent 60%),
+      radial-gradient(900px 600px at 50% 120%, #170f28 0%, transparent 55%),
+      var(--bg);
+    color:var(--ink); font-family:var(--sans);
+    display:flex; align-items:center; justify-content:center;
+    padding:clamp(14px,3vw,40px);
+  }
+  /* CRT cabinet screen */
+  .cab{
+    width:min(920px,100%);
+    background:linear-gradient(180deg,var(--panel) 0%,var(--panel2) 100%);
+    border:1px solid var(--line);
+    border-radius:16px;
+    box-shadow:
+      0 0 0 1px #0006 inset,
+      0 0 60px #39e2ff22,
+      0 30px 80px -30px #000;
+    position:relative; overflow:hidden;
+    padding:clamp(16px,3vw,30px);
+  }
+  .cab::after{ /* scanlines */
+    content:""; position:absolute; inset:0; pointer-events:none;
+    background:repeating-linear-gradient(0deg,#00000030 0 2px,#0000 2px 4px);
+    mix-blend-mode:multiply; opacity:.5;
+  }
+  .cab::before{ /* vignette + glow flicker */
+    content:""; position:absolute; inset:0; pointer-events:none;
+    box-shadow:0 0 120px #000a inset;
+    animation:flick 5.5s steps(30) infinite;
+  }
+  @keyframes flick{ 0%,97%,100%{opacity:.55} 98%{opacity:.42} }
+
+  .topbar{
+    display:flex; justify-content:space-between; align-items:baseline; gap:12px;
+    font-family:var(--mono); letter-spacing:.16em; text-transform:uppercase;
+    font-size:clamp(9px,1.4vw,12px); color:var(--dim);
+    border-bottom:1px dashed var(--line); padding-bottom:12px;
+  }
+  .topbar .coin{color:var(--gold)}
+  .title{
+    text-align:center; margin:16px 0 6px;
+    font-family:var(--mono); font-weight:700;
+    text-transform:uppercase; letter-spacing:.22em;
+    font-size:clamp(15px,3.4vw,26px);
+    color:var(--cyan);
+    text-shadow:0 0 8px #39e2ff88, 3px 3px 0 #0b3b4a;
+  }
+  .title small{display:block; color:var(--mag); font-size:.5em; letter-spacing:.3em; margin-top:8px; text-shadow:0 0 8px #ff478f66}
+
+  .stage{
+    display:grid; grid-template-columns:minmax(0,0.9fr) minmax(0,1.1fr);
+    gap:clamp(16px,3vw,28px); margin-top:18px; align-items:stretch;
+  }
+  @media(max-width:640px){ .stage{grid-template-columns:1fr} }
+
+  /* portrait */
+  .portrait{
+    position:relative; border:2px solid var(--cyan);
+    border-radius:12px; background:
+      linear-gradient(180deg,#0a1930 0%,#0a0f1c 70%);
+    box-shadow:0 0 24px #39e2ff33, 0 0 0 4px #0a0f1c inset;
+    display:flex; flex-direction:column; align-items:center; justify-content:flex-end;
+    padding:14px 14px 0; overflow:hidden; min-height:260px;
+  }
+  .portrait .floor{
+    position:absolute; left:0; right:0; bottom:0; height:38%;
+    background:
+      linear-gradient(180deg,transparent, #39e2ff10),
+      repeating-linear-gradient(90deg,#39e2ff22 0 1px,transparent 1px 26px),
+      repeating-linear-gradient(0deg,#39e2ff18 0 1px,transparent 1px 20px);
+    transform:perspective(200px) rotateX(58deg); transform-origin:bottom;
+    opacity:.55;
+  }
+  #hero{
+    image-rendering:pixelated; width:min(74%,220px); height:auto; position:relative; z-index:2;
+    filter:drop-shadow(0 8px 0 #0008);
+    animation:bob 2.4s ease-in-out infinite;
+  }
+  @keyframes bob{ 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
+  .nameplate{
+    position:relative; z-index:3; margin-top:8px; width:100%;
+    text-align:center; padding:8px 6px 12px;
+    font-family:var(--mono);
+  }
+  .nameplate .n{font-size:clamp(13px,2.6vw,18px); font-weight:700; letter-spacing:.12em; color:var(--gold); text-shadow:0 0 8px #ffce3d55}
+  .nameplate .n b{color:var(--ink)}
+  .nameplate .cls{font-size:clamp(8px,1.6vw,11px); letter-spacing:.24em; color:var(--cyan); text-transform:uppercase; margin-top:5px}
+
+  /* data panel */
+  .data{display:flex; flex-direction:column; gap:14px; font-family:var(--mono)}
+  .meta{display:flex; flex-wrap:wrap; gap:6px}
+  .chip{
+    font-size:10px; letter-spacing:.12em; text-transform:uppercase;
+    padding:4px 8px; border:1px solid var(--line); border-radius:5px;
+    color:var(--dim); background:#0a1120;
+  }
+  .chip b{color:var(--lime)}
+  .hp{display:flex; flex-direction:column; gap:6px}
+  .hp .lab{display:flex; justify-content:space-between; font-size:10px; letter-spacing:.16em; color:var(--dim); text-transform:uppercase}
+  .bar{height:14px; border:1px solid var(--line); border-radius:4px; background:#0a1120; padding:2px; overflow:hidden}
+  .bar > i{display:block; height:100%; border-radius:2px; width:0; transition:width 1.1s cubic-bezier(.2,.8,.2,1)}
+  .bar.hpfill > i{background:linear-gradient(90deg,#7bffb0,#39e2ff)}
+  .stats{display:flex; flex-direction:column; gap:9px}
+  .stat{display:grid; grid-template-columns:96px 1fr 30px; align-items:center; gap:8px}
+  .stat .k{font-size:10px; letter-spacing:.1em; color:var(--dim); text-transform:uppercase}
+  .stat .v{font-size:11px; color:var(--gold); text-align:right; font-variant-numeric:tabular-nums}
+  .stat .bar > i{background:linear-gradient(90deg,var(--mag),var(--cyan))}
+
+  .moves{display:flex; flex-direction:column; gap:7px; border-top:1px dashed var(--line); padding-top:12px}
+  .move{font-size:11px; line-height:1.5; color:var(--dim)}
+  .move .tag{color:var(--cyan); letter-spacing:.14em; text-transform:uppercase; font-size:9px; margin-right:6px}
+  .move.ult .tag{color:var(--gold)}
+  .move b{color:var(--ink)}
+
+  .foot{
+    margin-top:18px; text-align:center; font-family:var(--mono);
+    letter-spacing:.28em; text-transform:uppercase; font-size:clamp(10px,1.8vw,13px);
+    color:var(--gold);
+  }
+  .foot .blink{animation:blink 1s steps(2) infinite}
+  @keyframes blink{50%{opacity:0}}
+  .foot .credit{display:block; margin-top:8px; font-size:9px; letter-spacing:.14em; color:var(--faint)}
+
+  @media(prefers-reduced-motion:reduce){
+    #hero,.cab::before,.foot .blink{animation:none}
+    .bar > i{transition:none}
+  }
+</style>
+
+<div class="cab">
+  <div class="topbar">
+    <span>1P · Player Select</span>
+    <span class="coin">◎ Credits: ∞</span>
+    <span>Milano · IT</span>
+  </div>
+
+  <h1 class="title">Select Your Engineer<small>· Insert Coin to Ship ·</small></h1>
+
+  <div class="stage">
+    <!-- PORTRAIT -->
+    <div class="portrait">
+      <div class="floor"></div>
+      <img id="hero" src="data:image/png;base64,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" alt="Sprite pixel-art di Giuseppe Leonardi: capelli sale e pepe, barba scura, occhiali aviator, camicia chambray">
+      <div class="nameplate">
+        <div class="n">GIUSEPPE <b>“PEO”</b> LEONARDI</div>
+        <div class="cls">Senior Software Engineer · Quality Engineer</div>
+      </div>
+    </div>
+
+    <!-- DATA -->
+    <div class="data">
+      <div class="meta">
+        <span class="chip">LVL <b>15</b></span>
+        <span class="chip">Guild <b>Sysdig</b></span>
+        <span class="chip">Class <b>Staff</b></span>
+        <span class="chip">Since <b>2011</b></span>
+      </div>
+
+      <div class="hp">
+        <div class="lab"><span>HP</span><span>9999 / 9999</span></div>
+        <div class="bar hpfill"><i data-w="100"></i></div>
+      </div>
+
+      <div class="stats" id="stats">
+        <!-- filled by JS -->
+      </div>
+
+      <div class="moves">
+        <div class="move"><span class="tag">Passive</span><b>AI-Augmented</b> — l'IA propone, Peo decide, i quality gate confermano.</div>
+        <div class="move"><span class="tag">Special</span><b>Accordion Levenshtein</b> — comprime lo speech frammentato e stana la frase proibita nascosta in 3 pezzi.</div>
+        <div class="move ult"><span class="tag">Ultimate</span><b>Boolean Algebra Optimizer</b> — stesso risultato, una frazione del costo.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    Press <span class="blink">START</span>
+    <span class="credit">Sprite generato da foto · pixel-art 80×80 · rendering canvas</span>
+  </div>
+</div>
+
+<script>
+(function(){
+  // ---------- STATS ----------
+  const stats=[
+    ['Systems Design',92],
+    ['Code Craft',90],
+    ['AI Orchestration',95],
+    ['Compliance Rigor',94],
+    ['Leadership',88],
+    ['Guitar / Tone',80],
+  ];
+  const box=document.getElementById('stats');
+  stats.forEach(([k,v])=>{
+    const row=document.createElement('div'); row.className='stat';
+    row.innerHTML=`<span class="k">${k}</span><span class="bar"><i data-w="${v}"></i></span><span class="v">${v}</span>`;
+    box.appendChild(row);
+  });
+
+  // animate bars on load
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    document.querySelectorAll('.bar > i').forEach(i=>{ i.style.width=i.dataset.w+'%'; });
+  }));
+})();
+</script>
