@@ -374,7 +374,7 @@
     sysdig:'Quality Engineer · Sysdig · May 2026 – Present',
     toneforge:'Personal project', parcheggio:'Personal project', dnd:'Personal project · WIP',
     hobbies:'Off the clock', profile:'2011 → present · 15 unbroken years' };
-  var SIGNS=[ {x:150,yr:'2011',lb:'GFT'}, {x:1030,yr:'2014–17',lb:'PIKSEL'}, {x:2040,yr:'2017',lb:'→ ASC'}, {x:5150,yr:'',lb:'Personal Projects'} ];
+  var SIGNS=[ {x:150,yr:'2011',lb:'GFT'}, {x:1030,yr:'2014–17',lb:'PIKSEL'}, {x:2040,yr:'2017',lb:'→ ASC'}, {x:5150,yr:'',lb:'Personal Projects'}, {x:5830,yr:'2026',lb:'SYSDIG'} ];
   var COUNTABLE=STATIONS.filter(function(s){return !s.bonus;});
   var POS={cardinis:490,aim:2140,speechprime:3090,ri:4290,sysdig:5980,toneforge:5230,parcheggio:5360,dnd:5510,hobbies:6670,profile:6900};
   STATIONS.forEach(function(s){ if(POS[s.id]!=null) s.x=POS[s.id]; });
@@ -389,7 +389,7 @@
   // ---- build DOM ----
   var world=document.getElementById('world');
   GROUND.forEach(function(g){ var d=document.createElement('div'); d.className='ground'; d.style.left=g[0]+'px'; d.style.width=(g[1]-g[0])+'px'; world.appendChild(d); });
-  PLATS.forEach(function(p){ var d=document.createElement('div'); d.className='platform'; d.style.left=p.x+'px'; d.style.width=p.w+'px'; d.style.bottom=(GB+p.alt)+'px'; world.appendChild(d); });
+  PLATS.forEach(function(p){ var d=document.createElement('div'); d.className='platform'; d.style.left=p.x+'px'; d.style.width=p.w+'px'; d.style.bottom=(GB+p.alt-14)+'px'; world.appendChild(d); });
   SIGNS.forEach(function(s){ var d=document.createElement('div'); d.className='sign'; d.style.left=s.x+'px'; d.innerHTML='<div class="plate"><b>'+s.yr+'</b> '+s.lb+'</div><div class="post"></div>'; world.appendChild(d); });
 
   var blocks=[];
@@ -422,7 +422,7 @@
   var speed=4.2, JUMP=17, G=0.78, DEATH=-280;
   var dir=0, wantJump=false, hasGuitar=false, fireCD=0, coyote=0, jbuf=0;
   var started=false, modalOpen=false, dead=false, cvOpen=false;
-  var unlockedCount=0, checkpoint=120, bolts=[];
+  var unlockedCount=0, checkpoint=120, bolts=[], teeter=0;
   var eraEl=document.getElementById('era');
   function vw(){ return document.getElementById('screen').clientWidth; }
   function paused(){ return !started || modalOpen || dead || cvOpen; }
@@ -601,6 +601,7 @@
   // ---- main loop ----
   function step(){
     if(started && !paused()){
+      var wasGround=onGround, edgePx=px;
       var tv=dir*speed; vx+=(tv-vx)*0.2; if(Math.abs(vx)<0.05) vx=0;
       px+=vx; if(dir!==0) facing=dir>0?1:-1;
       if(px<40) px=40; if(px>WORLD_W-40) px=WORLD_W-40;
@@ -612,6 +613,8 @@
         if(px>bk.x-BW/2-11 && px<bk.x+BW/2+11 && prevPy+50<=bk.alt && py+50>=bk.alt){ py=bk.alt-50; vy=-2; breakBlock(bk); break; } } }
       onGround=false; var sup=supportsAt(px);
       for(var i=0;i<sup.length;i++){ var s=sup[i]; if(prevPy>=s-0.5 && py<=s && vy<=0){ py=s; vy=0; onGround=true; break; } }
+      if(!onGround && wasGround && vy<=0 && teeter<12){ px=edgePx; py=prevPy; vy=0; onGround=true; teeter++; }
+      else if(onGround){ teeter=0; }
       if(onGround){ coyote=8; } else if(coyote>0){ coyote--; }
       if(py<DEATH){ die(); }
       if(fireCD>0) fireCD--;

@@ -33,6 +33,27 @@ old_j = "    player.classList.toggle('walk', moving && !reduce);"
 new_j = "    player.classList.toggle('walk', moving && !reduce && onGround);\n    player.classList.toggle('air', !onGround && !reduce);"
 assert old_j in h; h = h.replace(old_j, new_j, 1)
 
+# 3b) piedi SOPRA le piattaforme (superficie superiore alla quota d'appoggio)
+old_plat = "d.className='platform'; d.style.left=p.x+'px'; d.style.width=p.w+'px'; d.style.bottom=(GB+p.alt)+'px';"
+new_plat = "d.className='platform'; d.style.left=p.x+'px'; d.style.width=p.w+'px'; d.style.bottom=(GB+p.alt-14)+'px';"
+assert old_plat in h, "platform build non trovato"; h = h.replace(old_plat, new_plat, 1)
+
+# 3c) TEETER ai bordi: ti fermi un istante sul ciglio invece di cadere subito
+h = h.replace('  var unlockedCount=0, checkpoint=120, bolts=[];',
+              '  var unlockedCount=0, checkpoint=120, bolts=[], teeter=0;', 1)
+old_mv = '      var tv=dir*speed; vx+=(tv-vx)*0.2; if(Math.abs(vx)<0.05) vx=0;'
+new_mv = '      var wasGround=onGround, edgePx=px;\n' + old_mv
+assert old_mv in h; h = h.replace(old_mv, new_mv, 1)
+old_cy = '      if(onGround){ coyote=8; } else if(coyote>0){ coyote--; }'
+new_cy = ('      if(!onGround && wasGround && vy<=0 && teeter<12){ px=edgePx; py=prevPy; vy=0; onGround=true; teeter++; }\n'
+          '      else if(onGround){ teeter=0; }\n' + old_cy)
+assert old_cy in h; h = h.replace(old_cy, new_cy, 1)
+
+# 3d) bandierina SYSDIG (con spiegazione via jobForSign->CVJOBS.sysdig)
+old_sig = "{x:5150,yr:'',lb:'Personal Projects'} ];"
+new_sig = "{x:5150,yr:'',lb:'Personal Projects'}, {x:5830,yr:'2026',lb:'SYSDIG'} ];"
+assert old_sig in h, "SIGNS non trovato"; h = h.replace(old_sig, new_sig, 1)
+
 # 4b) download PDF robusto (Blob invece di data-URI gigante)
 old_pdf = '''document.getElementById('dlPdf').addEventListener('click', function(){ var a=document.createElement('a'); a.href='data:application/pdf;base64,'+CV_PDF_B64; a.download='Giuseppe-Leonardi-CV.pdf'; document.body.appendChild(a); a.click(); setTimeout(function(){ a.remove(); },100); });'''
 new_pdf = '''document.getElementById('dlPdf').addEventListener('click', function(){ try{ var bin=atob(CV_PDF_B64),n=bin.length,arr=new Uint8Array(n); for(var i=0;i<n;i++)arr[i]=bin.charCodeAt(i); var b=new Blob([arr],{type:'application/pdf'}),url=URL.createObjectURL(b); var a=document.createElement('a'); a.href=url; a.download='Giuseppe-Leonardi-CV.pdf'; document.body.appendChild(a); a.click(); setTimeout(function(){ a.remove(); URL.revokeObjectURL(url); },300); }catch(e){ window.open('data:application/pdf;base64,'+CV_PDF_B64,'_blank'); } });'''
